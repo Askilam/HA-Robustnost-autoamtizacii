@@ -1,0 +1,17 @@
+rules:
+  - name: "metadata_ignored"
+    query: "$..metadata"
+    condition: "exists"
+    error: "Metadata field is ignored at runtime! It is only used for HA editor. Remove it or use 'variables:'"
+
+  - name: "choose_sequence_outside_branch"
+    query: "$.actions[*].choose[*].sequence[?(@.enabled)]"
+    condition: "exists"
+    error: "Indentation error for 'sequence:' in 'choose' action. For each 'conditions' there must be an equally indented 'sequence'."
+
+  #D1
+  - name: "wrong_state_case"
+    query: "$.triggers[?(@.trigger_type=='state')].to_"
+    condition: "contains"
+    substring: "On|Off|Open|Close"
+    error: "State values should be lowercase (e.g., 'on' not 'On'). Check HA Developer Tools for valid states."
