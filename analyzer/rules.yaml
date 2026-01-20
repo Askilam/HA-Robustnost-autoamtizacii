@@ -4,14 +4,93 @@ rules:
     condition: "exists"
     error: "Metadata field is ignored at runtime! It is only used for HA editor. Remove it or use 'variables:'"
 
-  - name: "choose_sequence_outside_branch"
-    query: "$.actions[*].choose[*].sequence[?(@.enabled)]"
-    condition: "exists"
-    error: "Indentation error for 'sequence:' in 'choose' action. For each 'conditions' there must be an equally indented 'sequence'."
-
   #D1
-  - name: "wrong_state_case"
+  - name: "wrong_state_case_trigger"
     query: "$.triggers[?(@.trigger_type=='state')].to_"
     condition: "contains"
     substring: "On|Off|Open|Close"
-    error: "State values should be lowercase (e.g., 'on' not 'On'). Check HA Developer Tools for valid states."
+    error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
+
+  - name: "wrong_state_case_codnition"
+    query: "$.conditions[?(@.condition_type=='state')].state"
+    condition: "contains"
+    substring: "On|Off|Open|Close"
+    error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
+
+  - name: "wrong_state_case_action"
+    query: "$.actions[?(@.action_type=='service')].data.state"
+    condition: "contains"
+    substring: "On|Off|Open|Close"
+    error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
+  #D2
+  - name: "wrong_trigger_type"
+    query: "$.triggers[?(@.trigger_type=='device')].params.for"
+    condition: "contains"
+    substring: "{{"
+    error: "Templates ('{{ ... }}' in 'for') not supported in 'device' trigger. Switch to a 'state' or 'numeric_state' trigger type."
+  #D3
+  - name: "wrong_data_retrieval_no_states"
+    query: "$..value_template | $..wait_template | $.actions[?(@.action_type=='service')].data.*"
+    condition: "matches_regex"
+    regex: "(?<!states\\(['\"])\\b\\w+\\.\\w+\\b"
+    error: "Direct entity references ('sensor.my_sensor') in templates are invalid. Use 'states(\"entity_id\")' to access states."
+  #D5
+  - name: "wrong_sun_predicates_condition"
+    query: "$..conditions[?(@.condition_type=='sun' & @.before=='sunrise' & @.after=='sunset')]"
+    condition: exists
+    error: "Invalid combination of 'before: sunrise' and 'after: sunset' in a single sun condition"
+
+  - name: "sun_pred_action_cond"
+    query: "$.actions[?(@.action_type=='if')].if_[?(@.condition_type=='sun' & @.before=='sunrise' & @.after=='sunset')]"
+    condition: exists
+    error: "Invalid combination of 'before: sunrise' and 'after: sunset' in a single sun condition in action"
+
+  - name: "repeat_action_while_until"
+    query: "$.actions[?(@.action_type=='repeat')]"
+    condition: exists
+    error: "Invalid combination of 'before: sunrise' and 'after: sunset' in a single sun condition in action"
+
+  - name: "wrong_sun_predicates_trigger"
+    query: "$.triggers[?(@.params.trigger=='sun' & @.params.offset != null)].params"
+    condition: offset
+    error: "Invalid 'offset' value in a single sun trigger"
+
+  - name: "wrong_time_predicates_trigger"
+    query: "$.triggers[?(@.params.trigger=='time' & @.params.offset != null)].params"
+    condition: offset
+    error: "Invalid 'offset' value in a single time trigger"
+
+  - name: "wrong_numeric_state_trigger_range"
+    query: "$.triggers[?(@.params.trigger=='numeric_state' & @.params.above != null & @.params.below != null)].params"
+    condition: "exists"
+    error: "Invalid range of numeric_state trigger 'above' cannot be greater than 'below'"
+
+  - name: "wrong_numeric_state_condition_range"
+    query: "$.conditions[?(@.condition_type=='numeric_state' & @.above != null & @.below != null)]"
+    condition: "exists"
+    error: "Invalid range of numeric_state condition 'above' cannot be greater than 'below'"
+
+  - name: "zone_trigg_conf_events"
+    query: "$.triggers[?(@.trigger_type=='zone')]"
+    condition: "exists"
+    error: "Conflicting event in zone trigger (enter & leave)"
+  #D6
+  - name: "wrong_value_template_placement"
+    query: "$..conditions[?(@.condition_type!='template' & @.condition_type!='numeric_state' & @.extra_params.*)] | $..actions[*].if_[?(@.condition_type!='template' & @.condition_type!='numeric_state' & @.extra_params.*)]"
+    condition: "exists"
+    error: "not supported atribute used in either 'if' or clasic condition"
+
+  - name: "wrong_value_while_placement"
+    query: $..actions[*].while_[?(@.condition_type!='template' & @.condition_type!='numeric_state' & @.extra_params.*)]
+    condition: "exists"
+    error: "not supported atribute used in 'while' condition"
+
+  - name: "wrong_value_until_placement"
+    query: $..actions[*].until[?(@.condition_type!='template' & @.condition_type!='numeric_state' & @.extra_params.*)]
+    condition: "exists"
+    error: "not supported atribute used in either 'until' condition"
+  #D7 recomendation
+  - name: "warning_state_check_missing"
+    query: "$..actions[?(@.action_type=='service')]"
+    condition: "exists"
+    error: "Recommendation: Check actual state of 'service' to prevent redundant executions"
