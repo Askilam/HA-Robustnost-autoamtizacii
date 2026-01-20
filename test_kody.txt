@@ -1,0 +1,235 @@
+sequence problem:
+
+alias: Gartenbleuchtung Ein
+description: "Durchschalten der Gerätegruppe Terrasse und Gartenlicht"
+triggers:
+  - domain: mqtt
+    device_id: 04b8c76654e541c8174599eda39832b0 #"Ikea Styrbar"
+    type: action
+    subtype: "on"
+    trigger: device
+actions:
+  - choose:
+    - conditions: 
+      - condition: state
+        entity_id: light.gartenlicht_kirschbaum
+        state: 'off'
+      - condition: state
+        entity_id: light.terrassenlicht_wohnzimmer
+        state: 'off'
+      sequence:
+        - action: light.turn_on
+          target: 
+            area_id: terrasse
+    - conditions: 
+      - condition: state
+        entity_id: light.gartenlicht_kirschbaum
+        state: 'off'
+      - condition: state
+        entity_id: light.terrassenlicht_wohnzimmer
+        state: 'on'
+      sequence:
+        - action: light.turn_on
+          target:
+            area_id: gartenlicht
+    - conditions: 
+      - condition: state
+        entity_id: light.gartenlicht_kirschbaum
+        state: 'on'
+      - condition: state
+        entity_id: light.terrassenlicht_wohnzimmer
+        state: 'on'
+      sequence:
+        - action: light.turn_off
+          target:
+            area_id: terrasse
+    - conditions: 
+      - condition: state
+        entity_id: light.gartenlicht_kirschbaum
+        state: 'on'
+      - condition: state
+        entity_id: light.terrassenlicht_wohnzimmer
+        state:  'off'
+      sequence:
+        - action: light.turn_off
+          target:
+            area_id: terrasse
+        - action: light.turn_off
+          target:
+            area_id: gartenlicht
+mode: single
+
+metadata problem:
+
+alias: Shutdown VM
+trigger: []  # Prázdny, lebo v threade nie je špecifikovaný
+condition: []  # Rovnako
+action:
+  - service: rest_command.proxmox_vm_shutdown
+    metadata:
+      vmName: frigate
+    data:
+      vmid: "{{ (vm_list.content.data | select('search', vmName) | first).vmid }}"  # CHYBA: vmName z metadata nie je dostupné v runtime
+      host: "{{ (vm_list.content.data | select('search', vmName) | first).node }}"
+enabled: true
+
+velke male on/off/...D1 problem
+
+alias: D1_all_errors
+trigger:
+  - platform: state
+    entity_id: light.living_room
+    from: 'off'
+    to: 'On'
+condition:
+  - condition: state
+    entity_id: sensor.door
+    state: 'Open'
+action:
+  - service: light.turn_on
+    data:
+      entity_id: light.kitchen
+      state: 'On'
+
+device_trigger_D2_problem
+
+- alias: wrong_state_case
+  trigger:
+    - type: no_motion
+      platform: device
+      device_id: e0954ea41d7a6da69baeff2e9558ed13
+      entity_id: binary_sensor.v4b01_motion
+      domain: binary_sensor
+      id: '1'
+      for:
+        hours: 0
+        minutes: "{{states('input_number.timeout_offices')|int(0) }}"
+        seconds: 0
+  action: []
+  
+D3 error
+
+alias: D3_error
+trigger:
+  - platform: state
+    entity_id: light.living_room
+    from: 'off'
+    to: 'on'
+condition:
+  - condition: state
+    entity_id: sensor.door
+    state: 'open'
+action:
+  - service: notify.mobile_app_huawei_p20
+    data:
+      title: Temperature Warning
+      message: "Temperature is {{ sensor.temperatur_gefrierschrank }}"
+      
+alias: D5_error_from_sheik_example
+trigger:
+  - platform: state
+    entity_id: light.living_room
+    from: 'off'
+    to: 'on'
+condition:
+- condition: sun
+  before: sunrise
+  after: sunset
+
+
+alias: D5_error_trigger_offset_sun
+trigger:
+  - trigger: sun
+    event: sunrise
+    offset: "-25:00:00"
+action: []
+
+alias: D5_error_trigg_offset_time
+trigger:
+  - trigger: time
+    at: "23:00:00"
+    weekday: [mon]
+    offset: "+25:00:00"
+action: []
+
+alias: D5_error_both_trigg_cond_num_state_above_below
+trigger:
+  - trigger: numeric_state
+    entity_id: sensor.temp
+    above: 10
+    below: 5
+condition:
+  - condition: numeric_state
+    entity_id: sensor.temp
+    above: 100
+    below: 0
+action: []
+
+alias: D5_error_zone_trigg
+trigger:
+  - trigger: zone
+    entity_id: person.me
+    zone: zone.home
+    event: enter
+  - trigger: zone
+    entity_id: person.me
+    zone: zone.home
+    event: leave
+action: []
+
+alias: D5_error_action_if_sun
+trigger:
+  []
+action:
+  - if:
+      - alias: "If no one is home"
+        condition: sun
+        before: sunrise
+        after: sunset
+    then:
+      - alias: "Then start cleaning already!"
+        action: vacuum.start
+        target:
+          area_id: living_room
+    else:
+      - action: notify.notify
+        data:
+          message: "Skipped cleaning, someone is home!"
+          
+alias: D5_error_while_until
+trigger:
+  []
+action:
+  - repeat:
+      while:
+        - condition: time
+          after: sunset
+      until:
+        - condition: time
+          before: sunrise
+          
+alias: D6_error_unknown_parameter_condition
+trigger:
+  []
+condition:
+  - condition: state
+    entity_id: light.kuchyne
+    state: 'on'
+    atribute: "{{ states('light.kuchyne') == 'on' }}"
+action:
+  []
+
+alias: D6_error_while_until_wrong_atribute
+trigger:
+  []
+action:
+  - repeat:
+      while:
+        - condition: time
+          after: sunset
+          atribute: "asncjkbd"
+      until:
+        - condition: time
+          after: sunset
+          atribute: "asncjkbd"
+
