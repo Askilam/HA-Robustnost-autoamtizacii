@@ -167,6 +167,7 @@ class Or_condition(Condition):
 class Not_condition(Condition):
     condition_type: str = "not"
     conditions: List["Condition"] = field(default_factory=list)
+    
 
 @dataclass
 class Numeric_state_condition(Condition):
@@ -184,6 +185,16 @@ class State_condition(Condition):
     state: Union[str, List[str]] = field(default_factory=list)
     for_loop: Optional[Dict[str, int]] = None
     attribute: Optional[str] = None
+    extra_params: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class Sun_condition(Condition):
+    condition_type: str = "sun"
+    after: Optional[str] = None
+    before: Optional[str] = None
+    after_offset: Optional[str] = None
+    before_offset: Optional[str] = None
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Template_condition(Condition):
@@ -196,6 +207,7 @@ class Time_condition(Condition):
     after: Optional[str] = None
     before: Optional[str] = None
     weekday: Optional[Union[str, List[str]]] = None
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Trigger_condition(Condition):
@@ -208,6 +220,7 @@ class Zone_condition(Condition):
     zone: str = ""
     entity_id: Union[str, List[str]] = field(default_factory=list)
     state: Optional[Union[str, List[str]]] = None
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Unknown_condition(Condition):
@@ -217,7 +230,7 @@ class Unknown_condition(Condition):
 Condition = Union[
     And_condition, Or_condition, Not_condition, Numeric_state_condition,
     State_condition, Template_condition, Time_condition, Trigger_condition, 
-    Zone_condition, Unknown_condition
+    Zone_condition, Sun_condition, Unknown_condition
 ]
 #------------ACTI-----------
 @dataclass
