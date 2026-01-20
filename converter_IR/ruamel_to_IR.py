@@ -10,7 +10,7 @@ from classes.classes import (
     Zone_trigger, Geolocation_trigger, Calendar_trigger, Sentence_trigger, Unknown_trigger,
     Condition, And_condition, Or_condition, Not_condition, Numeric_state_condition,
     State_condition, Template_condition, Time_condition, Trigger_condition,
-    Zone_condition, Unknown_condition,
+    Zone_condition, Sun_condition, Unknown_condition,
     Action, Service_action, Scene_action, Variable_action, Condition_action,
     Delay_action, Wait_template_action, Wait_trigger_action, Event_action,
     Repeat_action, If_action, Choose_action, Sequence_action, Parallel_action,
@@ -268,13 +268,27 @@ def ruamel_to_condition(one_condition: Dict[str, Any]) -> Condition:
             value_template = one_condition.get('value_template'),
             attribute = one_condition.get('attribute')
         )
+    elif condition_type == 'sun':
+        known_keys = {'alias', 'condition', 'enabled', 'after', 'before', 'after_offset', 'before_offset'}
+        extra = {key: val for key, val in one_condition.items() if key not in known_keys}
+        return Sun_condition(
+            enabled=one_condition.get('enabled', True),
+            after=one_condition.get('after'),
+            before=one_condition.get('before'),
+            after_offset=one_condition.get('after_offset'),
+            extra_params=extra,
+            before_offset=one_condition.get('before_offset')
+    )
     elif condition_type == 'state':
+        known_keys = {'alias', 'condition', 'enabled', 'entity_id', 'state', 'for', 'attribute'}
+        extra = {key: val for key, val in one_condition.items() if key not in known_keys}
         return State_condition(
             enabled = one_condition.get('enabled', True),
             entity_id = one_condition.get('entity_id', ''),
             state = one_condition.get('state', []),
             for_loop = one_condition.get('for'),
-            attribute = one_condition.get('attribute')
+            attribute = one_condition.get('attribute'),
+            extra_params=extra
         )
     elif condition_type == 'template':
         return Template_condition(
@@ -282,11 +296,14 @@ def ruamel_to_condition(one_condition: Dict[str, Any]) -> Condition:
             value_template = one_condition.get('value_template', '')
         )
     elif condition_type == 'time':
+        known_keys = {'alias', 'condition', 'enabled', 'after', 'before', 'weekday'}
+        extra = {key: val for key, val in one_condition.items() if key not in known_keys}
         return Time_condition(
             enabled = one_condition.get('enabled', True),
             after = one_condition.get('after'),
             before = one_condition.get('before'),
-            weekday = one_condition.get('weekday')
+            weekday = one_condition.get('weekday'),
+            extra_params=extra
         )
     elif condition_type == 'trigger':
         return Trigger_condition(
@@ -294,11 +311,14 @@ def ruamel_to_condition(one_condition: Dict[str, Any]) -> Condition:
             id = one_condition.get('id', [])
         )
     elif condition_type == 'zone':
+        known_keys = {'alias', 'condition', 'enabled', 'zone', 'entity_id', 'state'}
+        extra = {key: val for key, val in one_condition.items() if key not in known_keys}
         return Zone_condition(
             enabled = one_condition.get('enabled', True),
             zone = one_condition.get('zone', ''),
             entity_id = one_condition.get('entity_id', []),
-            state = one_condition.get('state')
+            state = one_condition.get('state'),
+            extra_params=extra
         )
     else:
         return Unknown_condition(
@@ -394,6 +414,7 @@ def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = 
             metadata=one_action.get('metadata')
         )
     elif 'repeat' in one_action:
+        repeat_data = one_action.get('repeat', {})
         return Repeat_action(
             id = one_action.get('id'),
             alias = one_action.get('alias'),
@@ -401,9 +422,9 @@ def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = 
             continue_on_error = one_action.get('continue_on_error', False),
             count = one_action.get('count'),
             for_each = one_action.get('for_each'),
-            while_ = [ruamel_to_condition(condition) for condition in condition_to_list(one_action.get('while', []))],
-            until = [ruamel_to_condition(condition) for condition in condition_to_list(one_action.get('until', []))],
-            sequence = [ruamel_to_action(action, errors) for action in one_action.get('sequence', [])],
+            while_=[ruamel_to_condition(condition) for condition in condition_to_list(repeat_data.get('while', []))],
+            until=[ruamel_to_condition(condition) for condition in condition_to_list(repeat_data.get('until', []))],
+            sequence=[ruamel_to_action(action, errors) for action in repeat_data.get('sequence', [])],
             metadata=one_action.get('metadata')
         )
     elif 'if' in one_action:
