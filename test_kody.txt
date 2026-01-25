@@ -1,3 +1,67 @@
+alias: Exterior - Evening Lights Automation
+description: ""
+trigger:
+  - platform: sun
+    event: sunset
+    id: "sunset"
+  - platform: time
+    at: "23:00:00"
+    id: "night"
+  - platform: time
+    at: "23:59:59"
+    id: "midnight"
+  - platform: sun
+    event: sunrise
+    offset: "-02:00:00"
+    id: "dawn"
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "sunset"
+        sequence:
+          - service: light.turn_on
+            data:
+              brightness_pct: 75
+            target:
+              entity_id:
+                - light.front_facade
+                - light.outside_entrance
+                - light.outside_columns
+      - conditions:
+          - condition: trigger
+            id: "night"
+        sequence:
+          - service: light.turn_on
+            data:
+              brightness_pct: 15
+            target:
+              entity_id:
+                - light.front_facade
+                - light.outside_columns
+                - light.outside_entrance
+      - conditions:
+          - condition: trigger
+            id: "midnight"
+        sequence:
+          - service: light.turn_off
+            data: {}
+            target:
+              entity_id:
+                - light.front_facade
+                - light.outside_columns
+      - conditions:
+          - condition: trigger
+            id: "dawn"
+        sequence:
+          - service: light.turn_off
+            data: {}
+            target:
+              entity_id: light.outside_entrance
+mode: single
+
+_____________________________________________-BAD CODES-_____________________________________
 sequence problem:
 
 alias: Gartenbleuchtung Ein
@@ -73,7 +137,7 @@ action:
       host: "{{ (vm_list.content.data | select('search', vmName) | first).node }}"
 enabled: true
 
-velke male on/off/...D1 problem
+velke male on/off/...D1 problem----------------------------------
 
 alias: D1_all_errors
 trigger:
@@ -90,8 +154,18 @@ action:
     data:
       entity_id: light.kitchen
       state: 'On'
+      
+alias: D1 ale wait_template
 
-device_trigger_D2_problem
+trigger:
+  - platform: state
+    entity_id: sensor.dryer
+    to: "running"
+
+action:
+  - wait_template: "{{ is_state('fan.bathroom', 'Off') }}"
+
+device_trigger_D2_problem----------------------------------
 
 - alias: wrong_state_case
   trigger:
@@ -107,7 +181,7 @@ device_trigger_D2_problem
         seconds: 0
   action: []
   
-D3 error
+D3 error ------------------------------------------------
 
 alias: D3_error
 trigger:
@@ -125,6 +199,7 @@ action:
       title: Temperature Warning
       message: "Temperature is {{ sensor.temperatur_gefrierschrank }}"
       
+D5 error ------------------------------------------------
 alias: D5_error_from_sheik_example
 trigger:
   - platform: state
@@ -208,7 +283,8 @@ action:
         - condition: time
           before: sunrise
           
-alias: D6_error_unknown_parameter_condition
+D6 error ------------------------------------------------
+alias: D6_error_unknown_parameter_condition 
 trigger:
   []
 condition:
@@ -232,4 +308,118 @@ action:
         - condition: time
           after: sunset
           atribute: "asncjkbd"
+
+D8 pre wait_for_trigger v pripade ak nieco je zapate nech to nezapina znovu --------------
+
+alias: Tool Bench Lights
+description: ""
+trigger: []
+condition: []
+action:
+  - wait_for_trigger:
+      - platform: state
+        entity_id: light.kitchen
+        to: 'on'
+
+alias: Tool Bench Lights
+trigger: []
+condition: []
+action:
+  - wait_for_trigger:
+      - type: no_motion
+        platform: device
+        device_id: 09ea66b8006a002cb6ffa125e6f7deeb
+        entity_id: f2d3faa59b3fa5680c49eab5927b5010
+        domain: binary_sensor
+        to: 'on'
+mode: single
+
+alias: Tool Bench Lights rovnaky trigger && wait_for_trigger
+trigger:
+  - platform: state
+    entity_id: binary_sensor.pohyb
+    to: 'on'
+condition: []
+action:
+  - wait_for_trigger:
+      - platform: state
+        entity_id: binary_sensor.pohyb
+        to: 'off'
+  - wait_for_trigger:
+      - platform: state
+        entity_id: binary_sensor.pohyb
+        to: 'on'
+  - service: notify.send
+mode: single
+
+D11 nepodporavany atribut v action_type == 'service' --------------------------------
+
+alias: Tool Bench Lights
+trigger:
+  - platform: state
+    entity_id: binary_sensor.pohyb
+    to: 'on'
+condition: []
+action:
+- service: tts.google_say
+  data:
+  entity_id: media_player.living_room_speaker
+  message: Dryer has started
+  cache: true
+  cache_dir: /tmp/tts
+mode: single
+
+D13 'state' v action --------------------------------------
+
+alias: Fix Broken Sensor
+
+trigger:
+  - platform: time
+    at: "03:00:00"
+
+action:
+  - service: homeassistant.update_entity
+    target:
+      entity_id: sensor.temperature_outside
+    data:
+      state: "20"
+      unit: "°C"
+      
+alias: Dryer Notification zanoreny 'state'
+
+trigger:
+  - platform: state
+    entity_id: sensor.dryer
+    to: "running"
+
+action:
+  - choose:
+      - conditions:
+          - condition: time
+            after: "08:00:00"
+        sequence:
+          - service: media_player.turn_on
+            target:
+              entity_id: media_player.living_room
+            data:
+              state: "on" 
+              volume: 0.5
+D15 ----------------------------------------
+alias: wait_template_no_timer
+
+trigger:
+  - platform: state
+    entity_id: sensor.dryer
+    to: "running"
+
+action:
+  - wait_template: "{{ is_state('fan.bathroom', 'off') }}"
+  
+D16 -----------------------------------
+
+alias: no_trigger_and_action
+
+trigger: []
+
+action: []
 
