@@ -58,7 +58,30 @@ def apply_rules(automations_ir: List[Automation],errors: List[Dict[str, Any]] = 
                             if while_ and until:
                                 condition_met = True
                                 break
-                    
+                    elif rule['name'] == 'wait_for_trigger_params': #D8
+                        for params in values:
+                            if 'to' in params and 'from' not in params and 'for' not in params and 'timeout' not in params:
+                                condition_met = True
+                            if 'to_' in params and params['to_'] is not None and 'from_' in params and params['from_'] is None:
+                                condition_met = True
+                    elif rule['name'] == 'wait_for_trigger':
+
+                        all_triggers_expr = parse("$.triggers")
+                        all_trigg_matches = all_triggers_expr.find(ir_to_dict)
+                        all_triggers = all_trigg_matches[0].value if all_trigg_matches else []
+                        
+                        for every_wait_trig in values:
+                            for wait_trig_vals in every_wait_trig:
+                                for one_trig_vals in all_triggers:
+                                    if wait_trig_vals == one_trig_vals:
+                                        condition_met = True
+                                        break
+                                        
+                                if condition_met:
+                                    break
+                            if condition_met:
+                                break
+
                     else:
                         for all_val in values:
                             above = all_val.get('above')

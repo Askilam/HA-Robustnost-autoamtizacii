@@ -8,19 +8,19 @@ rules:
   - name: "wrong_state_case_trigger"
     query: "$.triggers[?(@.trigger_type=='state')].to_"
     condition: "contains"
-    substring: "On|Off|Open|Close"
+    substring: "On|Off|Open|Close|True|False"
     error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
 
   - name: "wrong_state_case_codnition"
     query: "$.conditions[?(@.condition_type=='state')].state"
     condition: "contains"
-    substring: "On|Off|Open|Close"
+    substring: "On|Off|Open|Close|True|False"
     error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
 
   - name: "wrong_state_case_action"
     query: "$.actions[?(@.action_type=='service')].data.state"
     condition: "contains"
-    substring: "On|Off|Open|Close"
+    substring: "On|Off|Open|Close|True|False"
     error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
   #D2
   - name: "wrong_trigger_type"
@@ -94,3 +94,49 @@ rules:
     query: "$..actions[?(@.action_type=='service')]"
     condition: "exists"
     error: "Recommendation: Check actual state of 'service' to prevent redundant executions"
+  #D8 
+  - name: "wait_for_trigger_params"
+    query: "$.actions[?(@.action_type=='wait_for_trigger')].wait_for_trigger[?(@.params.to)].params"
+    condition: exists
+    error: "wait_for_trigger may not occur, cannot have 'to' without 'from', 'wait_template' use is suggested"
+
+  - name: "wait_for_trigger"
+    query: "$.actions[?(@.action_type=='wait_for_trigger')].wait_for_trigger"
+    condition: exists
+    error: "wait_for_trigger same as main trigger, might cause deadlock"
+  #D11
+  - name: "wrong_atribute__in_service_action"
+    query: "$..actions[?(@.action_type=='service' & @.extra_params.*)]"
+    condition: "exists"
+    error: "not supported attribute used in 'service' action"
+  #D13
+  - name: "state_used_in_action"
+    query: "$..*[?(@.action_type=='service' & @.data.state)]"
+    condition: "exists"
+    error: "cannot use 'state' in actions, using 'service' is recommended"
+  #D15
+  - name: "wrong_wait_template_usage_D1"
+    query: "$..actions[?(@.action_type=='wait_template')].wait_template"
+    condition: "contains"
+    substring: "On|Off|Open|Close|True|False"
+    error: "State values should be lowercase ('on' not 'On'). Check HA Developer Tools for valid states."
+
+  - name: "wrong_wait_template_usage_D15"
+    query: "$..actions[?(@.action_type=='wait_template' & @.timeout=='None')].wait_template"
+    condition: "contains"
+    substring: "on|off|open|close|true|false|<|>|<=|>=|=="
+    error: "Recommendation: 'wait_template' only re-evaluates when one of the referenced entities changes state. If the condition becomes true BEFORE entering 'wait_template' and no entity changes afterward, it may wait forever.
+    
+
+            'wait_template' without a 'timeout' can wait indefinitely if the condition is never met again. 
+            Adding 'timeout: HH:MM:SS' and 'continue_on_timeout: true/false' recommended."
+  #D16
+  - name: "missing_action"
+    query: "$.triggers[?(@.trigger_type=='empty')]"
+    condition: "exists"
+    error: "no 'triggers' defined"
+    
+  - name: "missing_trigger"
+    query: "$.actions[?(@.action_type=='empty')]"
+    condition: "exists"
+    error: "no 'actions' defined"
