@@ -40,6 +40,15 @@ def ruamel_to_IR(data: Any, errors: List[Dict[str, Any]] = None) -> List[Automat
         if not isinstance(actions_data, list):
             actions_data = [actions_data] if actions_data else []
 
+        
+        triggers_ir = [ruamel_to_trigger(one_trig) for one_trig in triggers_data if isinstance(one_trig, dict)]
+        if not triggers_ir:
+            triggers_ir = [Unknown_trigger(trigger_type="empty")]
+
+        actions_ir = [ruamel_to_action(one_act, errors) for one_act in actions_data if isinstance(one_act, dict)]
+        if not actions_ir:
+            actions_ir = [Unknown_action(action_type="empty")]
+
         one_automation_final = Automation(
             alias=one_automation.get('alias'),
             id=one_automation.get('id'),
@@ -49,9 +58,9 @@ def ruamel_to_IR(data: Any, errors: List[Dict[str, Any]] = None) -> List[Automat
             max_exceeded=one_automation.get('max_exceeded'),
             trigger_variables=one_automation.get('trigger_variables'),
             variables=one_automation.get('variables'),
-            triggers=[ruamel_to_trigger(one_trig) for one_trig in triggers_data if isinstance(one_trig, dict)],
+            triggers=triggers_ir,
             conditions=[ruamel_to_condition(one_cond) for one_cond in condition_to_list(conditions_data)],
-            actions=[ruamel_to_action(one_act, errors) for one_act in actions_data if isinstance(one_act, dict)]
+            actions=actions_ir
         )
         automations.append(one_automation_final)
     return automations
@@ -331,6 +340,8 @@ def ruamel_to_condition(one_condition: Dict[str, Any]) -> Condition:
 def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = None) -> Action:
 
     if 'service' in one_action:
+        known_keys = {'alias', 'id', 'enabled', 'continue_on_error', 'service', 'target', 'data', 'data_template', 'response_variable', 'metadata', 'entity_id', 'message'}
+        extra = {key: val for key, val in one_action.items() if key not in known_keys}
         return Service_action(
             id = one_action.get('id'),
             alias = one_action.get('alias'),
@@ -341,7 +352,8 @@ def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = 
             data = one_action.get('data'),
             data_template = one_action.get('data_template'),
             response_variable = one_action.get('response_variable'),
-            metadata=one_action.get('metadata')
+            metadata=one_action.get('metadata'),
+            extra_params=extra
         )
     elif 'scene' in one_action:
         return Scene_action(
@@ -386,7 +398,7 @@ def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = 
             enabled = one_action.get('enabled', True),
             continue_on_error = one_action.get('continue_on_error', False),
             wait_template = one_action.get('wait_template', ''),
-            timeout = one_action.get('timeout'),
+            timeout = one_action.get('timeout', "None"),
             continue_on_timeout = one_action.get('continue_on_timeout', True),
             response_variable = one_action.get('response_variable'),
             metadata=one_action.get('metadata')
