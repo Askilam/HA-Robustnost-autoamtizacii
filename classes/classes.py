@@ -250,6 +250,7 @@ class Service_action(Action):
     data: Optional[Dict[str, Any]] = None
     data_template: Optional[Dict[str, Any]] = None
     response_variable: Optional[str] = None
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Scene_action(Action):
@@ -275,7 +276,7 @@ class Delay_action(Action):
 class Wait_template_action(Action):
     action_type: str = "wait_template"
     wait_template: str = ""
-    timeout: Optional[Union[str, Dict[str, int]]] = None
+    timeout: Optional[Union[str, Dict[str, int]]] = "None"
     continue_on_timeout: Optional[bool] = True
     response_variable: Optional[str] = None
 
