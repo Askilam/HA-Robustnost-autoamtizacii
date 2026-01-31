@@ -1,144 +1,9 @@
-alias: Exterior - Evening Lights Automation
-description: ""
-trigger:
-  - platform: sun
-    event: sunset
-    id: "sunset"
-  - platform: time
-    at: "23:00:00"
-    id: "night"
-  - platform: time
-    at: "23:59:59"
-    id: "midnight"
-  - platform: sun
-    event: sunrise
-    offset: "-02:00:00"
-    id: "dawn"
-condition: []
-action:
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: "sunset"
-        sequence:
-          - service: light.turn_on
-            data:
-              brightness_pct: 75
-            target:
-              entity_id:
-                - light.front_facade
-                - light.outside_entrance
-                - light.outside_columns
-      - conditions:
-          - condition: trigger
-            id: "night"
-        sequence:
-          - service: light.turn_on
-            data:
-              brightness_pct: 15
-            target:
-              entity_id:
-                - light.front_facade
-                - light.outside_columns
-                - light.outside_entrance
-      - conditions:
-          - condition: trigger
-            id: "midnight"
-        sequence:
-          - service: light.turn_off
-            data: {}
-            target:
-              entity_id:
-                - light.front_facade
-                - light.outside_columns
-      - conditions:
-          - condition: trigger
-            id: "dawn"
-        sequence:
-          - service: light.turn_off
-            data: {}
-            target:
-              entity_id: light.outside_entrance
-mode: single
+import pytest
+from tests.util import analyze_yaml
 
-_____________________________________________-BAD CODES-_____________________________________
-sequence problem:
 
-alias: Gartenbleuchtung Ein
-description: "Durchschalten der Gerätegruppe Terrasse und Gartenlicht"
-triggers:
-  - domain: mqtt
-    device_id: 04b8c76654e541c8174599eda39832b0 #"Ikea Styrbar"
-    type: action
-    subtype: "on"
-    trigger: device
-actions:
-  - choose:
-    - conditions: 
-      - condition: state
-        entity_id: light.gartenlicht_kirschbaum
-        state: 'off'
-      - condition: state
-        entity_id: light.terrassenlicht_wohnzimmer
-        state: 'off'
-      sequence:
-        - action: light.turn_on
-          target: 
-            area_id: terrasse
-    - conditions: 
-      - condition: state
-        entity_id: light.gartenlicht_kirschbaum
-        state: 'off'
-      - condition: state
-        entity_id: light.terrassenlicht_wohnzimmer
-        state: 'on'
-      sequence:
-        - action: light.turn_on
-          target:
-            area_id: gartenlicht
-    - conditions: 
-      - condition: state
-        entity_id: light.gartenlicht_kirschbaum
-        state: 'on'
-      - condition: state
-        entity_id: light.terrassenlicht_wohnzimmer
-        state: 'on'
-      sequence:
-        - action: light.turn_off
-          target:
-            area_id: terrasse
-    - conditions: 
-      - condition: state
-        entity_id: light.gartenlicht_kirschbaum
-        state: 'on'
-      - condition: state
-        entity_id: light.terrassenlicht_wohnzimmer
-        state:  'off'
-      sequence:
-        - action: light.turn_off
-          target:
-            area_id: terrasse
-        - action: light.turn_off
-          target:
-            area_id: gartenlicht
-mode: single
-
-metadata problem:
-
-alias: Shutdown VM
-trigger: []
-condition: []
-action:
-  - service: rest_command.proxmox_vm_shutdown
-    metadata:
-      vmName: frigate
-    data:
-      vmid: "{{ (vm_list.content.data | select('search', vmName) | first).vmid }}"
-      host: "{{ (vm_list.content.data | select('search', vmName) | first).node }}"
-enabled: true
-
-velke male on/off/...D1 problem----------------------------------
-
+BAD_CODES = [
+    """
 alias: D1_all_errors
 trigger:
   - platform: state
@@ -154,7 +19,44 @@ action:
     data:
       entity_id: light.kitchen
       state: 'On'
-      
+""",
+
+    """
+alias: D5_error_from_sheik_example
+trigger:
+  - platform: state
+    entity_id: light.living_room
+    from: 'off'
+    to: 'on'
+condition:
+- condition: sun
+  before: sunrise
+  after: sunset
+""",
+    """
+alias: wait_template_no_timer
+trigger:
+  - platform: state
+    entity_id: sensor.dryer
+    to: "running"
+
+action:
+  - wait_template: "{{ is_state('fan.bathroom', 'off') }}"
+""",
+"""
+alias: Shutdown VM
+trigger: []
+condition: []
+action:
+  - service: rest_command.proxmox_vm_shutdown
+    metadata:
+      vmName: frigate
+    data:
+      vmid: "{{ (vm_list.content.data | select('search', vmName) | first).vmid }}"
+      host: "{{ (vm_list.content.data | select('search', vmName) | first).node }}"
+enabled: true
+""",
+"""
 alias: D1 ale wait_template
 
 trigger:
@@ -164,8 +66,8 @@ trigger:
 
 action:
   - wait_template: "{{ is_state('fan.bathroom', 'Off') }}"
-
-device_trigger_D2_problem----------------------------------
+""",
+"""
 alias: wrong_state_case
 trigger:
   - type: no_motion
@@ -179,9 +81,8 @@ trigger:
       minutes: "{{states('input_number.timeout_offices')|int(0) }}"
       seconds: 0
 action: []
-  
-D3 error ------------------------------------------------
-
+""",
+"""
 alias: D3_error
 trigger:
   - platform: state
@@ -197,27 +98,16 @@ action:
     data:
       title: Temperature Warning
       message: "Temperature is {{ sensor.temperatur_gefrierschrank }}"
-      
-D5 error ------------------------------------------------
-alias: D5_error_from_sheik_example
-trigger:
-  - platform: state
-    entity_id: light.living_room
-    from: 'off'
-    to: 'on'
-condition:
-- condition: sun
-  before: sunrise
-  after: sunset
-
-
+""",
+"""
 alias: D5_error_trigger_offset_sun
 trigger:
   - trigger: sun
     event: sunrise
     offset: "-25:00:00"
 action: []
-
+""",
+"""
 alias: D5_error_trigg_offset_time
 trigger:
   - trigger: time
@@ -225,7 +115,8 @@ trigger:
     weekday: [mon]
     offset: "+25:00:00"
 action: []
-
+""",
+"""
 alias: D5_error_both_trigg_cond_num_state_above_below
 trigger:
   - trigger: numeric_state
@@ -238,7 +129,8 @@ condition:
     above: 100
     below: 0
 action: []
-
+""",
+"""
 alias: D5_error_zone_trigg
 trigger:
   - trigger: zone
@@ -250,7 +142,8 @@ trigger:
     zone: zone.home
     event: leave
 action: []
-
+""",
+"""
 alias: D5_error_action_if_sun
 trigger:
   []
@@ -269,7 +162,8 @@ action:
       - action: notify.notify
         data:
           message: "Skipped cleaning, someone is home!"
-          
+""",
+"""     
 alias: D5_error_while_until
 trigger:
   []
@@ -281,8 +175,8 @@ action:
       until:
         - condition: time
           before: sunrise
-          
-D6 error ------------------------------------------------
+""",
+"""
 alias: D6_error_unknown_parameter_condition 
 trigger:
   []
@@ -293,7 +187,8 @@ condition:
     atribute: "{{ states('light.kuchyne') == 'on' }}"
 action:
   []
-
+""",
+"""
 alias: D6_error_while_until_wrong_atribute
 trigger:
   []
@@ -307,9 +202,8 @@ action:
         - condition: sun
           after: sunset
           atribute: "asncjkbd"
-
-D8 pre wait_for_trigger v pripade ak nieco je zapate nech to nezapina znovu --------------
-
+""",
+"""
 alias: Tool Bench Lights
 description: ""
 trigger: []
@@ -319,7 +213,8 @@ action:
       - platform: state
         entity_id: light.kitchen
         to: 'on'
-
+""",
+"""
 alias: Tool Bench Lights
 trigger: []
 condition: []
@@ -332,7 +227,8 @@ action:
         domain: binary_sensor
         to: 'on'
 mode: single
-
+""",
+"""
 alias: Tool Bench Lights rovnaky trigger && wait_for_trigger
 trigger:
   - platform: state
@@ -350,9 +246,8 @@ action:
         to: 'on'
   - service: notify.send
 mode: single
-
-D11 nepodporavany atribut v action_type == 'service' --------------------------------
-
+""",
+"""
 alias: Tool Bench Lights
 trigger:
   - platform: state
@@ -367,9 +262,8 @@ action:
   cache: true
   cache_dir: /tmp/tts
 mode: single
-
-D13 'state' v action --------------------------------------
-
+""",
+"""
 alias: Fix Broken Sensor
 
 trigger:
@@ -383,7 +277,8 @@ action:
     data:
       state: "20"
       unit: "°C"
-      
+""",
+""" 
 alias: Dryer Notification zanoreny 'state'
 
 trigger:
@@ -403,7 +298,8 @@ action:
             data:
               state: "on" 
               volume: 0.5
-D15 ----------------------------------------
+""",
+"""
 alias: wait_template_no_timer
 
 trigger:
@@ -413,14 +309,17 @@ trigger:
 
 action:
   - wait_template: "{{ is_state('fan.bathroom', 'off') }}"
-  
-D16 -----------------------------------
-
+""",
+"""
 alias: no_trigger_and_action
 
 trigger: []
 
 action: []
+"""
+]
 
-
-
+@pytest.mark.parametrize("code", BAD_CODES)
+def test_bad_codes_raise_errors(code):
+    errors = analyze_yaml(code)
+    assert len(errors) > 0, "Bad code should have errors"

@@ -96,14 +96,17 @@ def apply_rules(automations_ir: List[Automation],errors: List[Dict[str, Any]] = 
                                 except:
                                     pass
                             else:
-                                condition_met = True
+                                if above is None and below is not None or above is not None and below is None:
+                                    condition_met = False
+                                else:
+                                    condition_met = True
                 elif rule['condition'] == 'empty' and not values:
                     condition_met = True
                 elif rule['condition'] == 'equals' and values and all(v == rule.get('value') for v in values):
                     condition_met = True
                 elif rule['condition'] == 'contains' and values and any(any(sub in str(v) for sub in rule.get('substring', '').split('|')) for v in values):
                     condition_met = True
-                elif rule['condition'] == 'matches_regex' and values and any(re.search(rule.get('regex', ''), str(v)) for v in values):
+                elif rule['condition'] == 'matches_regex' and values and any('{{' in str(v) and re.search(rule.get('regex', ''), str(v)) for v in values if isinstance(v, str)):
                     condition_met = True
                 elif rule['condition'] == 'offset' and values:
                     for all_val in values:

@@ -338,6 +338,8 @@ def ruamel_to_condition(one_condition: Dict[str, Any]) -> Condition:
 
 
 def ruamel_to_action(one_action: Dict[str, Any], errors: List[Dict[str, Any]] = None) -> Action:
+    if 'action' in one_action:
+        one_action['service'] = one_action.pop('action')
 
     if 'service' in one_action:
         known_keys = {'alias', 'id', 'enabled', 'continue_on_error', 'service', 'target', 'data', 'data_template', 'response_variable', 'metadata', 'entity_id', 'message'}
