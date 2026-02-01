@@ -1,4 +1,4 @@
 # HA-Robustnost-autoamtizacii
-Baklalarska praca - Home Assistant: nástroj pro zlepšení spolehlivosti automatizací (in progress)
+Bakalarska praca - Home Assistant: nástroj pro zlepšení spolehlivosti automatizací (in progress)
 
 
