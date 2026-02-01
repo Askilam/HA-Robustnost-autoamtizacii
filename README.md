@@ -28,7 +28,7 @@ vykonáva množinu sémantických kontrol na základe definovaných pravidiel.
 ## Inštalácia
 
 ### 1. Vytvorenie virtuálneho prostredia
-
+``` bash
 python -m venv venv
 
 ### 2. Aktivácia virtuálneho prostredia
