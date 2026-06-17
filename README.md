@@ -1,38 +1,37 @@
-# HA-Robustnost-automatizacii
+# HA-Automation-Robustness
 
-Bakalárska práca  
-**Home Assistant: Nástroj na zlepšenie spoľahlivosti automatizácií**  
+Bachelor's Thesis
+**Home Assistant: A Tool for Improving Automation Reliability**  
 *(Work in Progress)*
 
 ---
 
-## Popis
+## Description
 
-Tento projekt implementuje nástroj na analýzu Home Assistant automatizácií.
-Cieľom je identifikovať sémantické chyby a potenciálne problémy, ktoré môžu viesť
-k nespoľahlivému správaniu automatizácií v inteligentnej domácnosti.
+This project implements a tool for analyzing Home Assistant automations.
 
-Nástroj spracúva YAML konfigurácie, prevádza ich do interného modelu (IR) a
-vykonáva množinu sémantických kontrol na základe definovaných pravidiel.
+The goal is to identify semantic errors and potential issues that may lead to unreliable behavior in smart home automations.
 
----
-
-## Požiadavky
-
-- Python **3.10+** (testované na 3.10 a 3.12)
-- Virtuálne prostredie (odporúčané)
-- Operačný systém: Linux / Windows / macOS
+The tool processes YAML configurations, converts them into an internal representation (IR), and performs a set of semantic checks based on predefined rules.
 
 ---
 
-## Inštalácia
+## Requirements
 
-### 1. Vytvorenie virtuálneho prostredia
+- Python 3.10+ (tested on 3.10 and 3.12)
+- Virtual environment (recommended)
+- Operating system: Linux / Windows / macOS
+
+---
+
+## Installation
+
+### 1. Create a Virtual Environment
 ``` bash
 python -m venv venv
 ```
 
-### 2. Aktivácia virtuálneho prostredia
+### 2. Activate the Virtual Environment
 
 #### Linux 
 ```bash
@@ -44,28 +43,27 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-### 3. Inštalácia závislostí
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Spustenie nástroja
-
-#### Na spustenie analýzy automatizácie použite:
+### 4. Run the Tool
+#### To analyze an automation:
 ``` bash
 python main.py
 ```
 
-#### Predvolený vstupný súbor:
+#### Default input file:
 ```
 automatizacia.yaml
 ```
 
-#### Výsledok analýzy sa uloží do súboru:
+#### Analysis results are saved to:
 ```
 parsed_output.txt
 ```
-### 5. Spustenie testov:
+### 5. Run Tests
 ```bash
 pytest -v
 ```
